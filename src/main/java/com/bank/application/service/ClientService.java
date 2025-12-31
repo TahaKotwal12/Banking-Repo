@@ -17,4 +17,21 @@ public interface ClientService {
      * @return Client details DTO
      */
     ClientDetailsDTO addClient(AddClientRequest request);
+
+    /**
+     * Get client by ID - exact same logic as legacy editclient()
+     * 
+     * @param clientId Client ID
+     * @return Client details DTO
+     */
+    ClientDetailsDTO getClientById(String clientId);
+
+    /**
+     * Update client details - exact same logic as legacy eclient()
+     * 
+     * @param clientId Client ID
+     * @param request  Client details to update
+     * @return Updated client details DTO
+     */
+    ClientDetailsDTO updateClient(String clientId, AddClientRequest request);
 }

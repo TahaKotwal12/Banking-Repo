@@ -60,4 +60,75 @@ public class ClientController {
                     ApiResponse.error("Failed to add client: " + e.getMessage(), 500));
         }
     }
+
+    /**
+     * Get client by ID - Replaces legacy "editclient" action
+     * 
+     * Legacy action: editclient -> Emp_AddClient_Action.editclient()
+     * Legacy result: Returns client details for editing
+     * 
+     * Modern endpoint: GET /api/clients/{clientId}
+     * Modern result: Returns JSON with client details
+     * 
+     * @param clientId Client ID
+     * @return ApiResponse with client details
+     */
+    @GetMapping("/{clientId}")
+    public ResponseEntity<ApiResponse<ClientDetailsDTO>> getClient(
+            @PathVariable String clientId) {
+
+        log.info("GET /api/clients/{} - Fetching client details", clientId);
+
+        try {
+            // Get client - EXACT same logic as legacy
+            ClientDetailsDTO client = clientService.getClientById(clientId);
+
+            // Success - return 200 OK
+            return ResponseEntity.ok(
+                    ApiResponse.success("Client retrieved successfully", client));
+
+        } catch (Exception e) {
+            // Error - return 404 or 500
+            log.error("Error fetching client: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ApiResponse.error("Client not found: " + e.getMessage(), 404));
+        }
+    }
+
+    /**
+     * Update client details - Replaces legacy "eclient" action
+     * 
+     * Legacy action: eclient -> Emp_AddClient_Action.eclient()
+     * Legacy message: "Changed Successfully"
+     * Legacy result: Updates client details
+     * 
+     * Modern endpoint: PUT /api/clients/{clientId}
+     * Modern result: Returns JSON with updated client details
+     * 
+     * @param clientId Client ID
+     * @param request  Updated client details
+     * @return ApiResponse with updated client details
+     */
+    @PutMapping("/{clientId}")
+    public ResponseEntity<ApiResponse<ClientDetailsDTO>> updateClient(
+            @PathVariable String clientId,
+            @Valid @RequestBody AddClientRequest request) {
+
+        log.info("PUT /api/clients/{} - Updating client details", clientId);
+
+        try {
+            // Update client - EXACT same logic as legacy
+            ClientDetailsDTO client = clientService.updateClient(clientId, request);
+
+            // Success - return 200 OK with EXACT same message as legacy
+            return ResponseEntity.ok(
+                    ApiResponse.success("Changed Successfully", client));
+
+        } catch (Exception e) {
+            // Error - return 404 or 500
+            log.error("Error updating client: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ApiResponse.error("Failed to update client: " + e.getMessage(), 404));
+        }
+    }
 }

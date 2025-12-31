@@ -82,6 +82,57 @@ public class ClientServiceImpl implements ClientService {
     }
 
     /**
+     * Get client by ID - EXACT same logic as legacy editclient()
+     * Legacy: "From Emp_AddClient WHERE bank_id = :clid"
+     */
+    @Override
+    public ClientDetailsDTO getClientById(String clientId) {
+
+        log.debug("Fetching client: {}", clientId);
+
+        BankClientDetails client = clientDetailsRepository.findByBankClientId(clientId)
+                .orElseThrow(() -> new RuntimeException("Client not found: " + clientId));
+
+        return convertToDTO(client);
+    }
+
+    /**
+     * Update client details - EXACT same logic as legacy eclient()
+     * 
+     * Legacy logic:
+     * Updates all client fields using HQL UPDATE query with parameterized values
+     */
+    @Override
+    public ClientDetailsDTO updateClient(String clientId, AddClientRequest request) {
+
+        log.debug("Updating client: {}", clientId);
+
+        // Find existing client
+        BankClientDetails client = clientDetailsRepository.findByBankClientId(clientId)
+                .orElseThrow(() -> new RuntimeException("Client not found: " + clientId));
+
+        // Update all fields - EXACT same as legacy UPDATE query
+        client.setBranchName(request.getBranchName());
+        client.setFirstName(request.getFirstName());
+        client.setMiddleName(request.getMiddleName());
+        client.setLastName(request.getLastName());
+        client.setGender(request.getGender());
+        client.setDob(request.getDob());
+        client.setLandLine(request.getLandLine());
+        client.setMobile(request.getMobile());
+        client.setEmail(request.getEmail());
+        client.setAddress(request.getAddress());
+        client.setCity(request.getCity());
+        client.setState(request.getState());
+
+        BankClientDetails updatedClient = clientDetailsRepository.save(client);
+
+        log.info("Client updated successfully: {}", clientId);
+
+        return convertToDTO(updatedClient);
+    }
+
+    /**
      * MD5 hash function - EXACT same as legacy md5() method in HibernateUtil
      */
     private String md5(String input) {
