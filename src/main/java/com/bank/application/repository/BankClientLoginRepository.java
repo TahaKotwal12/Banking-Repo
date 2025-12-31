@@ -19,9 +19,17 @@ public interface BankClientLoginRepository extends JpaRepository<BankClientLogin
      * Find client by username, password, and bank_id
      * Exact match to legacy SQL query
      */
-    @Query("SELECT login FROM BankClientLogin login WHERE login.userName = :userName AND login.password = :password AND login.bank_id = :bank_id")
+    @Query("SELECT c FROM BankClientLogin c WHERE c.userName = :userName AND c.password = :password AND c.bank_id = :bankId")
     Optional<BankClientLogin> findByUserNameAndPasswordAndBankId(
             @Param("userName") String userName,
             @Param("password") String password,
-            @Param("bank_id") String bank_id);
+            @Param("bankId") String bankId);
+
+    /**
+     * Find client by bank ID and password - for password change verification
+     */
+    @Query("SELECT c FROM BankClientLogin c WHERE c.bank_id = :bankId AND c.password = :password")
+    Optional<BankClientLogin> findByBank_idAndPassword(
+            @Param("bankId") String bankId,
+            @Param("password") String password);
 }

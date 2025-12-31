@@ -19,9 +19,17 @@ public interface BankAdminLoginRepository extends JpaRepository<BankAdminLogin, 
      * Find admin by username, password, and bank_id
      * Exact match to legacy SQL query
      */
-    @Query("SELECT login FROM BankAdminLogin login WHERE login.userName = :userName AND login.password = :password AND login.bank_id = :bank_id")
+    @Query("SELECT a FROM BankAdminLogin a WHERE a.userName = :userName AND a.password = :password AND a.bank_id = :bankId")
     Optional<BankAdminLogin> findByUserNameAndPasswordAndBankId(
             @Param("userName") String userName,
             @Param("password") String password,
-            @Param("bank_id") String bank_id);
+            @Param("bankId") String bankId);
+
+    /**
+     * Find admin by bank ID and password - for password change verification
+     */
+    @Query("SELECT a FROM BankAdminLogin a WHERE a.bank_id = :bankId AND a.password = :password")
+    Optional<BankAdminLogin> findByBank_idAndPassword(
+            @Param("bankId") String bankId,
+            @Param("password") String password);
 }

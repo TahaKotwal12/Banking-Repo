@@ -19,9 +19,17 @@ public interface BankEmpLoginRepository extends JpaRepository<BankEmpLogin, Long
      * Find employee by username, password, and bank_id
      * Exact match to legacy SQL query
      */
-    @Query("SELECT login FROM BankEmpLogin login WHERE login.userName = :userName AND login.password = :password AND login.bank_id = :bank_id")
+    @Query("SELECT e FROM BankEmpLogin e WHERE e.userName = :userName AND e.password = :password AND e.bank_id = :bankId")
     Optional<BankEmpLogin> findByUserNameAndPasswordAndBankId(
             @Param("userName") String userName,
             @Param("password") String password,
-            @Param("bank_id") String bank_id);
+            @Param("bankId") String bankId);
+
+    /**
+     * Find employee by bank ID and password - for password change verification
+     */
+    @Query("SELECT e FROM BankEmpLogin e WHERE e.bank_id = :bankId AND e.password = :password")
+    Optional<BankEmpLogin> findByBank_idAndPassword(
+            @Param("bankId") String bankId,
+            @Param("password") String password);
 }
