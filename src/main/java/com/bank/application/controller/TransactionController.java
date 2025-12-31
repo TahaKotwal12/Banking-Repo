@@ -141,4 +141,45 @@ public class TransactionController {
                     ApiResponse.error("Failed to retrieve transactions: " + e.getMessage(), 500));
         }
     }
+
+    /**
+     * View own transactions (Client self-service) - Replaces legacy "viewcl" action
+     * 
+     * Legacy action: viewcl -> Client_View_Action.viewcl()
+     * Legacy logic: Gets client ID from session (user1), then calls same list() and
+     * vish() methods
+     * Legacy result: Returns list of transactions + current balance to view.jsp
+     * 
+     * Modern endpoint: GET /api/transactions/my-transactions/{clientId}
+     * Modern result: Returns JSON with transaction list and current balance
+     * 
+     * Note: This uses the EXACT same service method as employee view
+     * (getClientTransactions)
+     * The only difference is the endpoint path to distinguish client vs employee
+     * access
+     * 
+     * @param clientId Client ID (from authenticated session in production)
+     * @return ApiResponse with transactions and current balance
+     */
+    @GetMapping("/my-transactions/{clientId}")
+    public ResponseEntity<ApiResponse<ClientTransactionsDTO>> viewMyTransactions(
+            @PathVariable String clientId) {
+
+        log.info("GET /api/transactions/my-transactions/{} - Client viewing own transactions", clientId);
+
+        try {
+            // Reuse same service method - EXACT same logic as legacy
+            ClientTransactionsDTO transactions = transactionService.getClientTransactions(clientId);
+
+            // Success - return 200 OK with transaction data
+            return ResponseEntity.ok(
+                    ApiResponse.success("Transactions retrieved successfully", transactions));
+
+        } catch (Exception e) {
+            // Error - return 500 with error message
+            log.error("Error fetching client transactions: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(
+                    ApiResponse.error("Failed to retrieve transactions: " + e.getMessage(), 500));
+        }
+    }
 }
