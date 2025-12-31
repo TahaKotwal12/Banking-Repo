@@ -1,10 +1,13 @@
 package com.bank.application.controller;
 
+import com.bank.application.dto.request.AddBankBranchRequest;
 import com.bank.application.dto.response.ApiResponse;
 import com.bank.application.dto.response.BankDetailsDTO;
 import com.bank.application.service.BankDetailsService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,6 +56,40 @@ public class BankDetailsController {
             log.error("Error fetching bank details: {}", e.getMessage());
             return ResponseEntity.internalServerError().body(
                     ApiResponse.error("Failed to retrieve bank details", 500));
+        }
+    }
+
+    /**
+     * Add new bank branch - Replaces legacy admin add bank action
+     * 
+     * Legacy action: Admin adds new bank branch
+     * Legacy result: Saves to bank_details table
+     * 
+     * Modern endpoint: POST /api/bank-details
+     * Modern result: Returns JSON with created bank branch
+     * 
+     * @param request Add bank branch request
+     * @return ApiResponse with created bank branch details
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<BankDetailsDTO>> addBankBranch(
+            @Valid @RequestBody AddBankBranchRequest request) {
+
+        log.info("POST /api/bank-details - Adding new bank branch: {}", request.getBankBranchName());
+
+        try {
+            // Add bank branch - EXACT same logic as legacy
+            BankDetailsDTO bankBranch = bankDetailsService.addBankBranch(request);
+
+            // Success - return 201 CREATED
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    ApiResponse.success("Bank branch added successfully", bankBranch, 201));
+
+        } catch (Exception e) {
+            // Error - return 500 with error message
+            log.error("Error adding bank branch: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(
+                    ApiResponse.error("Failed to add bank branch: " + e.getMessage(), 500));
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.bank.application.service;
 
+import com.bank.application.dto.request.AddBankBranchRequest;
 import com.bank.application.dto.response.BankDetailsDTO;
 
 import java.util.List;
@@ -16,4 +17,12 @@ public interface BankDetailsService {
      * @return List of all bank branch details
      */
     List<BankDetailsDTO> getAllBankDetails();
+
+    /**
+     * Add new bank branch - exact same as legacy admin add bank action
+     * 
+     * @param request Add bank branch request
+     * @return Created bank branch details
+     */
+    BankDetailsDTO addBankBranch(AddBankBranchRequest request);
 }
