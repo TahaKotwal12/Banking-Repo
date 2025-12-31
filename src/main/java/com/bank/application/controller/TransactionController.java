@@ -1,8 +1,10 @@
 package com.bank.application.controller;
 
 import com.bank.application.dto.request.DepositRequest;
+import com.bank.application.dto.request.WithdrawalRequest;
 import com.bank.application.dto.response.ApiResponse;
 import com.bank.application.dto.response.TransactionDTO;
+import com.bank.application.exception.InsufficientBalanceException;
 import com.bank.application.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +59,51 @@ public class TransactionController {
             log.error("Error processing deposit: {}", e.getMessage());
             return ResponseEntity.internalServerError().body(
                     ApiResponse.error("Failed to process deposit: " + e.getMessage(), 500));
+        }
+    }
+
+    /**
+     * Withdraw money - Replaces legacy "withdrawn" action
+     * 
+     * Legacy action: withdrawn -> Emp_AddTrans_Action.withdrawn()
+     * Legacy success message: "Withdrwan Successfully " (note the typo - keeping it
+     * exact)
+     * Legacy error messages: "Insufficient Amount", "Client Amount Is: X", "Minimum
+     * Amount Require 1500 Rs. "
+     * Legacy result: Returns SUCCESS to addwith.jsp or ERROR
+     * 
+     * Modern endpoint: POST /api/transactions/withdraw
+     * Modern result: Returns JSON with transaction details or error
+     * 
+     * @param request Withdrawal request with clientId, details, amount
+     * @return ApiResponse with transaction details or error
+     */
+    @PostMapping("/withdraw")
+    public ResponseEntity<ApiResponse<TransactionDTO>> withdraw(
+            @Valid @RequestBody WithdrawalRequest request) {
+
+        log.info("POST /api/transactions/withdraw - Client: {}, Amount: {}",
+                request.getClientId(), request.getAmount());
+
+        try {
+            // Process withdrawal - EXACT same logic as legacy
+            TransactionDTO transaction = transactionService.processWithdrawal(request);
+
+            // Success - return 200 OK with EXACT same message as legacy (including typo)
+            return ResponseEntity.ok(
+                    ApiResponse.success("Withdrwan Successfully ", transaction));
+
+        } catch (InsufficientBalanceException e) {
+            // Insufficient balance - return 400 with EXACT same error message as legacy
+            log.warn("Insufficient balance for withdrawal: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ApiResponse.error(e.getMessage(), 400));
+
+        } catch (Exception e) {
+            // Other errors - return 500
+            log.error("Error processing withdrawal: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(
+                    ApiResponse.error("Failed to process withdrawal: " + e.getMessage(), 500));
         }
     }
 }

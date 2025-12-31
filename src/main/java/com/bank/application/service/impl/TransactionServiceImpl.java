@@ -1,8 +1,10 @@
 package com.bank.application.service.impl;
 
 import com.bank.application.dto.request.DepositRequest;
+import com.bank.application.dto.request.WithdrawalRequest;
 import com.bank.application.dto.response.TransactionDTO;
 import com.bank.application.entity.BankTransaction;
+import com.bank.application.exception.InsufficientBalanceException;
 import com.bank.application.repository.BankTransactionRepository;
 import com.bank.application.service.TransactionService;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +86,62 @@ public class TransactionServiceImpl implements TransactionService {
         BankTransaction savedTransaction = transactionRepository.save(transaction);
 
         log.info("Deposit processed successfully. Client: {}, New Balance: {}",
+                request.getClientId(), newBalance);
+
+        // Convert to DTO and return
+        return convertToDTO(savedTransaction);
+    }
+
+    /**
+     * Process withdrawal - EXACT same logic as legacy withdrawn() method
+     * 
+     * Legacy logic:
+     * 1. Get last balance for client
+     * 2. Calculate new balance (current - withdrawal)
+     * 3. Check if current balance >= 1500 AND new balance >= 1500
+     * 4. If validation fails, throw exception with EXACT same error messages
+     * 5. If valid, save transaction and return success
+     */
+    @Override
+    public TransactionDTO processWithdrawal(WithdrawalRequest request) throws Exception {
+
+        log.debug("Processing withdrawal for client: {}, amount: {}",
+                request.getClientId(), request.getAmount());
+
+        // Get last balance - EXACT same query as legacy
+        List<String> balanceList = transactionRepository
+                .findLastBalanceByClientId(request.getClientId());
+
+        if (balanceList == null || balanceList.isEmpty()) {
+            throw new InsufficientBalanceException("No balance found for client");
+        }
+
+        String currentBalanceStr = balanceList.get(0);
+        int currentBalance = Integer.parseInt(currentBalanceStr);
+        int withdrawalAmount = Integer.parseInt(request.getAmount());
+        int newBalance = currentBalance - withdrawalAmount;
+
+        // EXACT same validation as legacy: if (sa < 1500 || xy < 1500)
+        if (currentBalance < 1500 || newBalance < 1500) {
+            // EXACT same error messages as legacy
+            String errorMsg = "Insufficient Amount\n" +
+                    "Client Amount Is: " + currentBalanceStr + "\n" +
+                    "Minimum Amount Require 1500 Rs. ";
+            throw new InsufficientBalanceException(errorMsg);
+        }
+
+        // Create new transaction entity
+        BankTransaction transaction = new BankTransaction();
+        transaction.setBankClientId(request.getClientId());
+        transaction.setDetails(request.getDetails());
+        transaction.setWithdrawn(request.getAmount());
+        transaction.setBalance(String.valueOf(newBalance));
+        transaction.setCreated(new Date());
+
+        // Save transaction - EXACT same as legacy session.save()
+        BankTransaction savedTransaction = transactionRepository.save(transaction);
+
+        log.info("Withdrawal processed successfully. Client: {}, New Balance: {}",
                 request.getClientId(), newBalance);
 
         // Convert to DTO and return
