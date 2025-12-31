@@ -3,6 +3,7 @@ package com.bank.application.controller;
 import com.bank.application.dto.request.DepositRequest;
 import com.bank.application.dto.request.WithdrawalRequest;
 import com.bank.application.dto.response.ApiResponse;
+import com.bank.application.dto.response.ClientTransactionsDTO;
 import com.bank.application.dto.response.TransactionDTO;
 import com.bank.application.exception.InsufficientBalanceException;
 import com.bank.application.service.TransactionService;
@@ -104,6 +105,40 @@ public class TransactionController {
             log.error("Error processing withdrawal: {}", e.getMessage());
             return ResponseEntity.internalServerError().body(
                     ApiResponse.error("Failed to process withdrawal: " + e.getMessage(), 500));
+        }
+    }
+
+    /**
+     * View client transactions - Replaces legacy "viewcls" action
+     * 
+     * Legacy action: viewcls -> Emp_AddTrans_Action.viewcls()
+     * Legacy result: Returns list of transactions + current balance to view.jsp
+     * 
+     * Modern endpoint: GET /api/transactions/client/{clientId}
+     * Modern result: Returns JSON with transaction list and current balance
+     * 
+     * @param clientId Client ID
+     * @return ApiResponse with transactions and current balance
+     */
+    @GetMapping("/client/{clientId}")
+    public ResponseEntity<ApiResponse<ClientTransactionsDTO>> viewClientTransactions(
+            @PathVariable String clientId) {
+
+        log.info("GET /api/transactions/client/{} - Fetching transactions", clientId);
+
+        try {
+            // Get transactions - EXACT same logic as legacy
+            ClientTransactionsDTO transactions = transactionService.getClientTransactions(clientId);
+
+            // Success - return 200 OK with transaction data
+            return ResponseEntity.ok(
+                    ApiResponse.success("Transactions retrieved successfully", transactions));
+
+        } catch (Exception e) {
+            // Error - return 500 with error message
+            log.error("Error fetching transactions: {}", e.getMessage());
+            return ResponseEntity.internalServerError().body(
+                    ApiResponse.error("Failed to retrieve transactions: " + e.getMessage(), 500));
         }
     }
 }

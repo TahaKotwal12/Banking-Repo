@@ -2,6 +2,7 @@ package com.bank.application.service.impl;
 
 import com.bank.application.dto.request.DepositRequest;
 import com.bank.application.dto.request.WithdrawalRequest;
+import com.bank.application.dto.response.ClientTransactionsDTO;
 import com.bank.application.dto.response.TransactionDTO;
 import com.bank.application.entity.BankTransaction;
 import com.bank.application.exception.InsufficientBalanceException;
@@ -146,6 +147,56 @@ public class TransactionServiceImpl implements TransactionService {
 
         // Convert to DTO and return
         return convertToDTO(savedTransaction);
+    }
+
+    /**
+     * Get all transactions for a client - EXACT same logic as legacy viewcls()
+     * method
+     * 
+     * Legacy logic:
+     * 1. Query all transactions for client (list() method)
+     * 2. Get current balance (vish() method - gets last balance)
+     * 3. Return both to JSP
+     */
+    @Override
+    public ClientTransactionsDTO getClientTransactions(String clientId) {
+
+        log.debug("Fetching transactions for client: {}", clientId);
+
+        // Get all transactions - EXACT same query as legacy list()
+        // Legacy: "From Emp_AddTrans WHERE clid = :clid"
+        List<BankTransaction> transactions = transactionRepository
+                .findByBankClientId(clientId);
+
+        // Convert to DTOs
+        List<TransactionDTO> transactionDTOs = transactions.stream()
+                .map(this::convertToDTO)
+                .toList();
+
+        // Get current balance - EXACT same query as legacy vish()
+        // Legacy: "SELECT depo.amount FROM Emp_AddTrans depo WHERE depo.clid = :clid
+        // ORDER BY depo.id DESC LIMIT 1"
+        String currentBalance = null;
+        try {
+            List<String> balanceList = transactionRepository
+                    .findLastBalanceByClientId(clientId);
+
+            if (balanceList != null && !balanceList.isEmpty()) {
+                currentBalance = balanceList.get(0);
+            }
+        } catch (Exception e) {
+            log.warn("Error retrieving current balance: {}", e.getMessage());
+        }
+
+        log.info("Retrieved {} transactions for client: {}, Current balance: {}",
+                transactions.size(), clientId, currentBalance);
+
+        // Build response - EXACT same data as legacy (detailList + namount)
+        return ClientTransactionsDTO.builder()
+                .clientId(clientId)
+                .currentBalance(currentBalance)
+                .transactions(transactionDTOs)
+                .build();
     }
 
     /**
